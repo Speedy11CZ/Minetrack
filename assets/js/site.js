@@ -11,6 +11,7 @@ var mojangServicesUpdater;
 var sortServersTask;
 
 var currentServerHover;
+var faviconSize = 64;
 
 function updateServerStatus(lastEntry) {
     var info = lastEntry.info;
@@ -22,6 +23,7 @@ function updateServerStatus(lastEntry) {
         var versions = '';
 
         for (var i = 0; i < lastEntry.versions.length; i++) {
+            if (!lastEntry.versions[i]) continue;
             versions += '<span class="version">' + publicConfig.minecraftVersions[lastEntry.info.type][lastEntry.versions[i]] + '</span>&nbsp;';
         }
 
@@ -81,49 +83,22 @@ function updateServerStatus(lastEntry) {
 }
 
 function sortServers() {
-    if (categoriesVisible) {
-        var byCategories = getServersByCategory();
+	var serverNames = [];
 
-        var categories = Object.keys(byCategories);
+	var keys = Object.keys(lastPlayerEntries);
 
-        for (var i = 0; i < categories.length; i++) {
-            var relevantPlayers = [];
+	for (var i = 0; i < keys.length; i++) {
+		serverNames.push(keys[i]);
+	}
 
-            for (var x = 0; x < byCategories[categories[i]].length; x++) {
-                var server = byCategories[categories[i]][x];
+	serverNames.sort(function(a, b) {
+		return (lastPlayerEntries[b] || 0) - (lastPlayerEntries[a] || 0);
+	});
 
-                relevantPlayers[server.name] = lastPlayerEntries[server.name];
-            }
-
-            var keys = Object.keys(relevantPlayers);
-
-            keys.sort(function(a, b) {
-                return relevantPlayers[b] - relevantPlayers[a];
-            });
-
-            for (var x = 0; x < keys.length; x++) {
-                $('#container_' + safeName(keys[x])).appendTo('#server-container-' + categories[i]);
-                $('#ranking_' + safeName(keys[x])).text('#' + (x + 1));
-            }
-        }
-    } else {
-        var serverNames = [];
-
-        var keys = Object.keys(lastPlayerEntries);
-
-        for (var i = 0; i < keys.length; i++) {
-            serverNames.push(keys[i]);
-        }
-
-        serverNames.sort(function(a, b) {
-            return (lastPlayerEntries[b] || 0) - (lastPlayerEntries[a] || 0);
-        });
-
-        for (var i = 0; i < serverNames.length; i++) {
-            $('#container_' + safeName(serverNames[i])).appendTo('#server-container-all');
-            $('#ranking_' + safeName(serverNames[i])).text('#' + (i + 1));
-        }
-    }
+	for (var i = 0; i < serverNames.length; i++) {
+		$('#container_' + safeName(serverNames[i])).appendTo('#server-container-list');
+		$('#ranking_' + safeName(serverNames[i])).text('#' + (i + 1));
+	}
 }
 
 function updatePercentageBar() {
@@ -260,6 +235,21 @@ function printPort(port) {
   }
 }
 
+function updateServerPeak(name, time, playerCount) {
+	var safeNameCopy = safeName(name);
+	// hack: strip the AM/PM suffix
+	// Javascript doesn't have a nice way to format Dates with AM/PM, so we'll append it manually
+	var timestamp = getTimestamp(time / 1000).split(':');
+	var end = timestamp.pop().split(' ')[1];
+	timestamp = timestamp.join(':');
+	// end may be undefined for other timezones/24 hour times
+	if (end) {
+		timestamp += ' ' + end;
+	}
+	var timeLabel = msToTime(publicConfig.graphDuration);
+	$('#peak_' + safeNameCopy).html(timeLabel + ' Peak: ' + formatNumber(playerCount) + ' @ ' + timestamp);
+}
+
 $(document).ready(function() {
 	var socket = io.connect({
         reconnect: true,
@@ -283,8 +273,6 @@ $(document).ready(function() {
         graphs = {};
 
         $('#server-container-list').html('');
-
-        createdCategories = false;
 
         $('#big-graph').html('');
         $('#big-graph-checkboxes').html('');
@@ -412,20 +400,21 @@ $(document).ready(function() {
                 class: 'server',
                 'server-id': safeNameCopy,
                 html: '<div id="server-' + safeNameCopy + '" class="column" style="width: 80px;">\
-                            <img id="favicon_' + safeNameCopy + '" title="' + info.name + '\n' + info.ip + printPort(info.port) + '">\
+                            <img id="favicon_' + safeNameCopy + '" title="' + info.name + '\n' + info.ip + printPort(info.port) + '" height="' + faviconSize + '" width="' + faviconSize + '">\
                             <br />\
                             <p class="text-center-align rank" id="ranking_' + safeNameCopy + '"></p>\
                         </div>\
-                        <div class="column" style="width: 220px;">\
+                        <div class="column" style="width: 282px;">\
                             <h3>' + info.name + '&nbsp;' + typeString + '</h3>\
                             <span id="status_' + safeNameCopy + '">Waiting</span>\
-                            <div id="version_' + safeNameCopy + '" class="color-dark-gray server-meta versions"><span class="version"></span></div>\
-                            <span id="record_' + safeNameCopy + '" class="color-dark-gray server-meta"></span>\
+							<div id="version_' + safeNameCopy + '" class="color-dark-gray server-meta versions"><span class="version"></span></div>\
+							<span id="peak_' + safeNameCopy + '" class="color-dark-gray server-meta"></span>\
+                            <br><span id="record_' + safeNameCopy + '" class="color-dark-gray server-meta"></span>\
                         </div>\
                         <div class="column" style="float: right;">\
                             <div class="chart" id="chart_' + safeNameCopy + '"></div>\
                         </div>'
-            }).appendTo("#server-container-" + getServerByIp(info.ip).category);
+            }).appendTo("#server-container-list");
 
             var favicon = MISSING_FAVICON_BASE64;
 
@@ -484,17 +473,24 @@ $(document).ready(function() {
         }
     });
 
-    socket.on('syncComplete', function(data) {
+    socket.on('syncComplete', function() {
         hideCaption();
+	});
+	
+	socket.on('updatePeak', function(data) {
+		updateServerPeak(data.name, data.timestamp, data.players);
+	});
 
-        $(document).on('click', '.server', function(e) {
-            var serverId = $(this).attr('server-id');
-        });
-    });
+	socket.on('peaks', function(data) {
+		var keys = Object.keys(data);
+		for (var i = 0; i < keys.length; i++) {
+			var val = data[keys[i]];
+			updateServerPeak(keys[i], val[0], val[1]);
+		}
+	});
 
     $(document).on('click', '.graph-control', function(e) {
         var serverIp = $(this).attr('data-target-network');
-        var checked = $(this).attr('checked');
 
         // Restore it, or delete it - either works.
         if (!this.checked) {

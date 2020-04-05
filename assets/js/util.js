@@ -5,15 +5,6 @@ var tooltip = $('#tooltip');
 var lastMojangServiceUpdate;
 var publicConfig;
 
-var createdCategories = false;
-var categoriesVisible;
-
-var colorsByStatus = {
-    'Online': '#87D37C',
-    'Unstable': '#f1c40f',
-    'Offline': '#DE5749'
-};
-
 function showCaption(html) {
     var tagline = $('#tagline-text');
     tagline.stop(true, false);
@@ -29,51 +20,7 @@ function hideCaption() {
 
 function setPublicConfig(json) {
     publicConfig = json;
-
     $('#server-container-list').html('');
-
-    createdCategories = false;
-
-    createCategories();
-
-    if (publicConfig.categoriesVisible) {
-    	$('.category-header').css('display', 'block');
-	    $('.server-container').css('margin', '10px auto');
-
-	    sortServers();
-    }
-}
-
-function createCategories() {
-	if (!createdCategories) {
-		createdCategories = true;
-
-		var keys = Object.keys(publicConfig.categories);
-
-		for (var i = 0; i < keys.length; i++) {
-			var title = publicConfig.categories[keys[i]];
-
-			$('#server-container-list').append('<div id="server-container-' + keys[i] + '" class="container server-container"><h3 class="category-header">' + title + '</h3></div>');
-		}
-
-		$('#server-container-list').append('<div id="server-container-all" class="container server-container"></div>');
-	}
-}
-
-function getServersByCategory() {
-	var byCategory = {};
-
-	for (var i = 0; i < publicConfig.servers.length; i++) {
-		var entry = publicConfig.servers[i];
-
-		if (!byCategory[entry.category]) {
-			byCategory[entry.category] = [];
-		}
-
-		byCategory[entry.category].push(entry);
-	}
-
-	return byCategory;
 }
 
 function getServerByField(id, value) {
@@ -116,9 +63,10 @@ function updateMojangServices(currentUpdate) {
 
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
-        var status = lastMojangServiceUpdate[key];
+		var status = lastMojangServiceUpdate[key];
 
-        $('#mojang-status_' + status.name).css({background: colorsByStatus[status.title]});
+		// hack: ensure mojang-status is added for alignment, replace existing class to swap status color
+        $('#mojang-status_' + status.name).attr('class', 'mojang-status mojang-status-' + status.title.toLowerCase());
         $('#mojang-status-text_' + status.name).text(status.title);
     }
 }
@@ -215,7 +163,17 @@ function msToTime(timer) {
 	var minutes = timer % 60;
 	var hours = (timer - minutes) / 60;
 
+	var days = Math.floor(hours / 24);
+	hours -= days * 24;
+
 	var string = '';
+
+	// hack: only format days if >1, if === 1 it will format as "24h" instead
+	if (days > 1) {
+		string += days + 'd';
+	} else if (days === 1) {
+		hours += 24;
+	}
 
 	if (hours > 0) {
 		string += hours + 'h';

@@ -1,8 +1,6 @@
 node_modules/
-*.log
+minetrack.log
 .idea/
-production/
 database.sql
 database.sql-journal
 .DS_Store
-yarn.lock
