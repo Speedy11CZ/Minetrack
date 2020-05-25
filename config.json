@@ -10,5 +10,6 @@
 		"connectTimeout": 2500
 	},
 	"logToDatabase": false,
-	"graphDuration": 86400000
+	"graphDuration": 86400000,
+	"serverGraphDuration": 180000
 }

@@ -1,53 +1,26 @@
-import { formatNumber, formatTimestamp, isMobileBrowser } from './util'
+import uPlot from 'uplot'
+
+import { RelativeScale } from './scale'
+
+import { formatNumber, formatTimestampSeconds } from './util'
+import { uPlotTooltipPlugin } from './tooltip'
 
 import { FAVORITE_SERVERS_STORAGE_KEY } from './favorites'
-
-export const HISTORY_GRAPH_OPTIONS = {
-  series: {
-    shadowSize: 0
-  },
-  xaxis: {
-    font: {
-      color: '#E3E3E3'
-    },
-    show: false
-  },
-  yaxis: {
-    show: true,
-    tickSize: 5000,
-    tickLength: 10,
-    tickFormatter: formatNumber,
-    font: {
-      color: '#E3E3E3'
-    },
-    labelWidth: -5,
-    min: 0
-  },
-  grid: {
-    hoverable: true,
-    color: '#696969'
-  },
-  legend: {
-    show: false
-  }
-}
 
 const HIDDEN_SERVERS_STORAGE_KEY = 'minetrack_hidden_servers'
 const SHOW_FAVORITES_STORAGE_KEY = 'minetrack_show_favorites'
 
 export class GraphDisplayManager {
-  // Only emit graph data request if not on mobile due to graph data size
-  isVisible = !isMobileBrowser()
-
   constructor (app) {
     this._app = app
     this._graphData = []
+    this._graphTimestamps = []
     this._hasLoadedSettings = false
     this._initEventListenersOnce = false
     this._showOnlyFavorites = false
   }
 
-  addGraphPoint (serverId, timestamp, playerCount) {
+  addGraphPoint (timestamp, playerCounts) {
     if (!this._hasLoadedSettings) {
       // _hasLoadedSettings is controlled by #setGraphData
       // It will only be true once the context has been loaded and initial payload received
@@ -56,14 +29,31 @@ export class GraphDisplayManager {
       return
     }
 
-    // Trim any outdated entries by filtering the array into a new array
-    const startTimestamp = new Date().getTime()
-    const newGraphData = this._graphData[serverId].filter(point => startTimestamp - point[0] <= this._app.publicConfig.graphDuration)
+    this._graphTimestamps.push(timestamp)
 
-    // Push the new data from the method call request
-    newGraphData.push([timestamp, playerCount])
+    for (let i = 0; i < playerCounts.length; i++) {
+      this._graphData[i].push(playerCounts[i])
+    }
 
-    this._graphData[serverId] = newGraphData
+    // Trim all data arrays to only the relevant portion
+    // This keeps it in sync with backend data structures
+    const graphMaxLength = this._app.publicConfig.graphMaxLength
+
+    if (this._graphTimestamps.length > graphMaxLength) {
+      this._graphTimestamps.splice(0, this._graphTimestamps.length - graphMaxLength)
+    }
+
+    for (const series of this._graphData) {
+      if (series.length > graphMaxLength) {
+        series.splice(0, series.length - graphMaxLength)
+      }
+    }
+
+    // Paint updated data structure
+    this._plotInstance.setData([
+      this._graphTimestamps,
+      ...this._graphData
+    ])
   }
 
   loadLocalStorage () {
@@ -124,23 +114,27 @@ export class GraphDisplayManager {
     }
   }
 
-  // Converts the backend data into the schema used by flot.js
   getVisibleGraphData () {
-    return Object.keys(this._graphData)
-      .map(Number)
-      .map(serverId => this._app.serverRegistry.getServerRegistration(serverId))
-      .filter(serverRegistration => serverRegistration !== undefined && serverRegistration.isVisible)
-      .map(serverRegistration => {
-        return {
-          data: this._graphData[serverRegistration.serverId],
-          yaxis: 1,
-          label: serverRegistration.data.name,
-          color: serverRegistration.data.color
-        }
-      })
+    return this._app.serverRegistry.getServerRegistrations()
+      .filter(serverRegistration => serverRegistration.isVisible)
+      .map(serverRegistration => this._graphData[serverRegistration.serverId])
   }
 
-  buildPlotInstance (graphData) {
+  getPlotSize () {
+    return {
+      width: Math.max(window.innerWidth, 800) * 0.9,
+      height: 400
+    }
+  }
+
+  getGraphDataPoint (serverId, index) {
+    const graphData = this._graphData[serverId]
+    if (graphData && index < graphData.length && typeof graphData[index] === 'number') {
+      return graphData[index]
+    }
+  }
+
+  buildPlotInstance (timestamps, data) {
     // Lazy load settings from localStorage, if any and if enabled
     if (!this._hasLoadedSettings) {
       this._hasLoadedSettings = true
@@ -148,31 +142,127 @@ export class GraphDisplayManager {
       this.loadLocalStorage()
     }
 
-    // Remap the incoming data from being string (serverName) keyed into serverId keys
-    for (const serverName of Object.keys(graphData)) {
-      const serverRegistration = this._app.serverRegistry.getServerRegistration(serverName)
-      this._graphData[serverRegistration.serverId] = graphData[serverName]
-    }
+    this._graphTimestamps = timestamps
+    this._graphData = data
 
-    // Explicitly define a height so flot.js can rescale the Y axis
-    document.getElementById('big-graph').style.height = '400px'
+    const series = this._app.serverRegistry.getServerRegistrations().map(serverRegistration => {
+      return {
+        scale: 'Players',
+        stroke: serverRegistration.data.color,
+        width: 2,
+        value: (_, raw) => formatNumber(raw) + ' Players',
+        show: serverRegistration.isVisible,
+        spanGaps: true,
+        points: {
+          show: false
+        }
+      }
+    })
 
-    this._plotInstance = $.plot('#big-graph', this.getVisibleGraphData(), HISTORY_GRAPH_OPTIONS)
+    const tickCount = 10
+
+    // eslint-disable-next-line new-cap
+    this._plotInstance = new uPlot({
+      plugins: [
+        uPlotTooltipPlugin((pos, id) => {
+          if (pos) {
+            let text = this._app.serverRegistry.getServerRegistrations()
+              .filter(serverRegistration => serverRegistration.isVisible)
+              .sort((a, b) => {
+                if (a.isFavorite !== b.isFavorite) {
+                  return a.isFavorite ? -1 : 1
+                }
+
+                const aPoint = this.getGraphDataPoint(a.serverId, id)
+                const bPoint = this.getGraphDataPoint(b.serverId, id)
+
+                if (typeof aPoint === typeof bPoint) {
+                  if (typeof aPoint === 'undefined') {
+                    return 0
+                  }
+                } else {
+                  return typeof aPoint === 'number' ? -1 : 1
+                }
+
+                return bPoint - aPoint
+              })
+              .map(serverRegistration => {
+                const point = this.getGraphDataPoint(serverRegistration.serverId, id)
+
+                let serverName = serverRegistration.data.name
+                if (serverRegistration.isFavorite) {
+                  serverName = '<span class="' + this._app.favoritesManager.getIconClass(true) + '"></span> ' + serverName
+                }
+
+                if (typeof point === 'number') {
+                  return serverName + ': ' + formatNumber(point)
+                } else {
+                  return serverName + ': -'
+                }
+              }).join('<br>')
+
+            text += '<br><br><strong>' + formatTimestampSeconds(this._graphTimestamps[id]) + '</strong>'
+
+            this._app.tooltip.set(pos.left, pos.top, 10, 10, text)
+          } else {
+            this._app.tooltip.hide()
+          }
+        })
+      ],
+      ...this.getPlotSize(),
+      cursor: {
+        y: false
+      },
+      series: [
+        {
+        },
+        ...series
+      ],
+      axes: [
+        {
+          font: '14px "Open Sans", sans-serif',
+          stroke: '#FFF',
+          grid: {
+            show: false
+          },
+          space: 60
+        },
+        {
+          font: '14px "Open Sans", sans-serif',
+          stroke: '#FFF',
+          size: 65,
+          grid: {
+            stroke: '#333',
+            width: 1
+          },
+          split: () => {
+            const visibleGraphData = this.getVisibleGraphData()
+            const [, max, scale] = RelativeScale.scaleMatrix(visibleGraphData, tickCount)
+            const ticks = RelativeScale.generateTicks(0, max, scale)
+            return ticks
+          }
+        }
+      ],
+      scales: {
+        Players: {
+          auto: false,
+          range: () => {
+            const visibleGraphData = this.getVisibleGraphData()
+            const [, scaledMax] = RelativeScale.scaleMatrix(visibleGraphData, tickCount)
+            return [0, scaledMax]
+          }
+        }
+      },
+      legend: {
+        show: false
+      }
+    }, [
+      this._graphTimestamps,
+      ...this._graphData
+    ], document.getElementById('big-graph'))
 
     // Show the settings-toggle element
     document.getElementById('settings-toggle').style.display = 'inline-block'
-  }
-
-  // requestRedraw allows usages to request a redraw that may be performed, or cancelled, sometime later
-  // This allows multiple rapid, but individual updates, to clump into a single redraw instead
-  requestRedraw () {
-    if (this._redrawRequestTimeout) {
-      clearTimeout(this._redrawRequestTimeout)
-    }
-
-    // Schedule new delayed redraw call
-    // This can be cancelled by #requestRedraw, #redraw and #reset
-    this._redrawRequestTimeout = setTimeout(this.redraw, 1000)
   }
 
   redraw = () => {
@@ -180,19 +270,12 @@ export class GraphDisplayManager {
     // This may cause unnessecary localStorage updates, but its a rare and harmless outcome
     this.updateLocalStorage()
 
-    // Fire calls to the provided graph instance
-    // This allows flot.js to manage redrawing and creates a helper method to reduce code duplication
-    this._plotInstance.setData(this.getVisibleGraphData())
-    this._plotInstance.setupGrid()
-    this._plotInstance.draw()
-
-    // undefine value so #clearTimeout is not called
-    // This is safe even if #redraw is manually called since it removes the pending work
-    if (this._redrawRequestTimeout) {
-      clearTimeout(this._redrawRequestTimeout)
+    // Copy application state into the series data used by uPlot
+    for (const serverRegistration of this._app.serverRegistry.getServerRegistrations()) {
+      this._plotInstance.series[serverRegistration.serverId + 1].show = serverRegistration.isVisible
     }
 
-    this._redrawRequestTimeout = undefined
+    this._plotInstance.redraw()
   }
 
   requestResize () {
@@ -211,11 +294,7 @@ export class GraphDisplayManager {
   }
 
   resize = () => {
-    if (this._plotInstance) {
-      this._plotInstance.resize()
-      this._plotInstance.setupGrid()
-      this._plotInstance.draw()
-    }
+    this._plotInstance.setSize(this.getPlotSize())
 
     // undefine value so #clearTimeout is not called
     // This is safe even if #resize is manually called since it removes the pending work
@@ -224,21 +303,6 @@ export class GraphDisplayManager {
     }
 
     this._resizeRequestTimeout = undefined
-  }
-
-  // Called by flot.js when they hover over a data point.
-  handlePlotHover = (event, pos, item) => {
-    if (!item) {
-      this._app.tooltip.hide()
-    } else {
-      let text = formatNumber(item.datapoint[1]) + ' Players<br>' + formatTimestamp(item.datapoint[0])
-      // Prefix text with the series label when possible
-      if (item.series && item.series.label) {
-        text = '<strong>' + item.series.label + '</strong><br>' + text
-      }
-
-      this._app.tooltip.set(item.pageX, item.pageY, 10, 10, text)
-    }
   }
 
   initEventListeners () {
@@ -252,8 +316,6 @@ export class GraphDisplayManager {
         element.addEventListener('click', this.handleShowButtonClick, false)
       })
     }
-
-    $('#big-graph').bind('plothover', this.handlePlotHover)
 
     // These listeners should be bound each #initEventListeners call since they are for newly created elements
     document.querySelectorAll('.graph-control').forEach((element) => {
@@ -339,8 +401,15 @@ export class GraphDisplayManager {
   }
 
   reset () {
+    // Destroy graphs and unload references
+    // uPlot#destroy handles listener de-registration, DOM reset, etc
+    if (this._plotInstance) {
+      this._plotInstance.destroy()
+      this._plotInstance = undefined
+    }
+
+    this._graphTimestamps = []
     this._graphData = []
-    this._plotInstance = undefined
     this._hasLoadedSettings = false
 
     // Fire #clearTimeout if the timeout is currently defined
@@ -350,21 +419,10 @@ export class GraphDisplayManager {
       this._resizeRequestTimeout = undefined
     }
 
-    if (this._redrawRequestTimeout) {
-      clearTimeout(this._redrawRequestTimeout)
-
-      this._redrawRequestTimeout = undefined
-    }
-
     // Reset modified DOM structures
     document.getElementById('big-graph-checkboxes').innerHTML = ''
     document.getElementById('big-graph-controls').style.display = 'none'
 
     document.getElementById('settings-toggle').style.display = 'none'
-
-    const graphElement = document.getElementById('big-graph')
-
-    graphElement.innerHTML = ''
-    graphElement.removeAttribute('style')
   }
 }

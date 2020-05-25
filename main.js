@@ -8,7 +8,7 @@ const servers = require('./servers')
 
 const app = new App()
 
-servers.forEach(server => {
+servers.forEach((server, serverId) => {
   // Assign a generated color for each servers.json entry if not manually defined
   // These will be passed to the frontend for use in rendering
   if (!server.color) {
@@ -22,8 +22,13 @@ servers.forEach(server => {
   }
 
   // Init a ServerRegistration instance of each entry in servers.json
-  app.serverRegistrations.push(new ServerRegistration(server))
+  app.serverRegistrations.push(new ServerRegistration(app, serverId, server))
 })
+
+if (!config.serverGraphDuration) {
+  logger.log('warn', '"serverGraphDuration" is not defined in config.json - defaulting to 3 minutes!')
+  config.serverGraphDuration = 3 * 60 * 10000
+}
 
 if (!config.logToDatabase) {
   logger.log('warn', 'Database logging is not enabled. You can enable it by setting "logToDatabase" to true in config.json. This requires sqlite3 to be installed.')
