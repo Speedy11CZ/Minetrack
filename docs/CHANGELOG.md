@@ -1,3 +1,32 @@
+**5.5.7** *(July 7 2020)*
+- Fixes an issue in which the light theme CSS may not be applied by default.
+
+**5.5.6** *(June 24 2020)*
+- Adds Minecraft versions 1.16 and 1.16.1 to `minecraft_versions.json`
+- Fixes the historical graph not updating.
+
+**5.5.5** *(June 17 2020)*
+- Fixes servers with constant player counts failing to render graphs due to the min/max values being equal.
+
+**5.5.4** *(June 16 2020)*
+- Updated uPlot dependency 1.0.8 -> 1.0.11.
+
+**5.5.3** *(June 14 2020)*
+- Fixed issue with graph scales being wrongly set which could cause Y axis labels to not appear.
+
+**5.5.2** *(June 12 2020)*
+- Fixed ping errors causing server graphs (or the historical graph) to sometimes disappear.
+- Fixed ping errors causing server graphs to reset their Y scale minimum to 0.
+- Improved zoomed detection and updating of the historical graph with recommendations by [@leeoniya](https://github.com/leeoniya).
+
+**5.5.1** *(June 10 2020)*
+- New tooltip hover design on the historical graph. It will highlight the server closest to your cursor.
+- Historical graph is now limited to 10,000 increments on the Y axis. This prevents servers with over 100,000 players forcing the graph into 100,000 increments.
+- Fixed the historical graph zooming out when receiving new data points.
+- Fixed newly added servers aligning to the left of the historical graph.
+- Replaces manual string concats with template literals.
+- Updated various dependencies.
+
 **5.5.0** *(May 20 2020)*
 
 **IMPORTANT**
