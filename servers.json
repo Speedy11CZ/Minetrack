@@ -1,22 +1,57 @@
 [
 	{
-		"name": "Hypixel",
-		"ip": "mc.hypixel.net",
+		"name": "Survival Games",
+		"ip": "play.survival-games.cz",
+		"type": "PC",
+		"color": "#047c0e"
+	},
+	{
+		"name": "GameTeam",
+		"ip": "play.gameteam.cz",
+		"type": "PC",
+		"color": "#d1cd08"
+	},
+	{
+		"name": "QPlay",
+		"ip": "mc.qplay.cz",
+		"type": "PC",
+		"color": "#f2eded"
+	},
+	{
+		"name": "Craftmania",
+		"ip": "play.craftmania.cz",
 		"type": "PC"
 	},
 	{
-		"name": "HiveMC",
-		"ip": "play.hivemc.com",
+		"name": "MiniCraft",
+		"ip": "play.minicraft.cz",
 		"type": "PC"
 	},
 	{
-		"name": "Mineplex",
-		"ip": "us.mineplex.com",
+		"name": "Trenend",
+		"ip": "play.trenend.eu",
 		"type": "PC"
 	},
 	{
-		"name": "CubeCraft",
-		"ip": "play.cubecraft.net",
+		"name": "KastrolCraft",
+		"ip": "mc.kastrolcraft.cz",
 		"type": "PC"
+	},
+	{
+		"name": "BasicLand",
+		"ip": "mc.basicland.cz",
+		"type": "PC"
+	},
+	{
+		"name": "PVPMania",
+		"ip": "mc.pvpmania.eu",
+		"type": "PC",
+		"color": "#fc6b03"
+	},
+	{
+		"name": "GlowSite",
+		"ip": "mc.glowsite.cz",
+		"type": "PC",
+		"color": "#b08205"
 	}
 ]
