@@ -53,5 +53,11 @@
 		"ip": "mc.glowsite.cz",
 		"type": "PC",
 		"color": "#b08205"
+	},
+	{
+		"name": "Vanillazone",
+		"ip": "mc.vanillazone.eu",
+		"type": "PC",
+		"color": "#00ac6c"
 	}
 ]
