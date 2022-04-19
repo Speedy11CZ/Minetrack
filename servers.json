@@ -6,16 +6,16 @@
 		"color": "#047c0e"
 	},
 	{
-		"name": "GameTeam",
-		"ip": "play.gameteam.cz",
-		"type": "PC",
-		"color": "#d1cd08"
-	},
-	{
 		"name": "QPlay",
 		"ip": "mc.qplay.cz",
 		"type": "PC",
 		"color": "#f2eded"
+	},
+	{
+		"name": "Darkup",
+		"ip": "Darkup.cz",
+		"type": "PC",
+		"color": "#f9b219"
 	},
 	{
 		"name": "Craftmania",
@@ -38,11 +38,6 @@
 		"type": "PC"
 	},
 	{
-		"name": "BasicLand",
-		"ip": "mc.basicland.cz",
-		"type": "PC"
-	},
-	{
 		"name": "PVPMania",
 		"ip": "mc.pvpmania.eu",
 		"type": "PC",
@@ -57,6 +52,12 @@
 	{
 		"name": "Vanillazone",
 		"ip": "mc.vanillazone.eu",
+		"type": "PC",
+		"color": "#00ac6c"
+	},
+	{
+		"name": "SkyBlock.cz",
+		"ip": "skyblock.cz",
 		"type": "PC",
 		"color": "#00ac6c"
 	}
