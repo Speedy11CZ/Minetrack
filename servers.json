@@ -1,7 +1,7 @@
 [
 	{
 		"name": "Survival Games",
-		"ip": "play.survival-games.cz",
+		"ip": "mc.survival-games.cz",
 		"type": "PC",
 		"color": "#047c0e"
 	},
@@ -10,12 +10,6 @@
 		"ip": "mc.qplay.cz",
 		"type": "PC",
 		"color": "#f2eded"
-	},
-	{
-		"name": "Darkup",
-		"ip": "Darkup.cz",
-		"type": "PC",
-		"color": "#f9b219"
 	},
 	{
 		"name": "Craftmania",
@@ -33,31 +27,8 @@
 		"type": "PC"
 	},
 	{
-		"name": "KastrolCraft",
-		"ip": "mc.kastrolcraft.cz",
-		"type": "PC"
-	},
-	{
-		"name": "PVPMania",
-		"ip": "mc.pvpmania.eu",
-		"type": "PC",
-		"color": "#fc6b03"
-	},
-	{
-		"name": "GlowSite",
-		"ip": "mc.glowsite.cz",
-		"type": "PC",
-		"color": "#b08205"
-	},
-	{
-		"name": "Vanillazone",
-		"ip": "mc.vanillazone.eu",
-		"type": "PC",
-		"color": "#00ac6c"
-	},
-	{
 		"name": "SkyBlock.cz",
-		"ip": "skyblock.cz",
+		"ip": "mc.skyblock.cz",
 		"type": "PC",
 		"color": "#00f224"
 	}
