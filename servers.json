@@ -6,27 +6,6 @@
 		"color": "#047c0e"
 	},
 	{
-		"name": "QPlay",
-		"ip": "mc.qplay.cz",
-		"type": "PC",
-		"color": "#f2eded"
-	},
-	{
-		"name": "Craftmania",
-		"ip": "play.craftmania.cz",
-		"type": "PC"
-	},
-	{
-		"name": "MiniCraft",
-		"ip": "play.minicraft.cz",
-		"type": "PC"
-	},
-	{
-		"name": "Trenend",
-		"ip": "mc.trenend.eu",
-		"type": "PC"
-	},
-	{
 		"name": "SkyBlock.cz",
 		"ip": "mc.skyblock.cz",
 		"type": "PC",

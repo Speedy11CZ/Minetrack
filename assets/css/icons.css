@@ -57,3 +57,6 @@
 .icon-street-view:before {
   content: "\f21d";
 }
+.icon-discord:before {
+  content: "\e900";
+}

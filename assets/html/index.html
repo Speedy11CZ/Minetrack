@@ -19,10 +19,20 @@
 	<link rel="icon" type="image/svg+xml" href="../images/logo.svg">
 
 	<meta charset="UTF-8">
+	<meta name="description" content="Minetrack je platforma pro sledování Minecraft serverů. Poskytuje informace týkající se všech přidaných serverů, jako jsou například aktuální počty hráčů, nejvyšší počet hráčů či automatické grafy s počty hráčů.">
+	<meta name="keywords" content="Minetrack, Minecraft, Server list, Server status, Czech Minetrack, Český minetrack, seznam serverů">
+	<meta name="author" content="Penzion Loket">
+	<meta name="robots" content="index, follow">
+	<meta name="theme-color" content="#99ff96">
+	<meta property="og:title" content="Minetrack.cz">
+	<meta property="og:description" content="Penzion Loket je moderní nově postavený penzion v Lokti, který se nachází nedaleko centra.">
+	<meta property="og:url" content="https://minetrack.cz/">
+	<meta property="og:type" content="website">
+	<meta property="og:locale" content="cs_CZ">
 
 	<script defer type="module" src="../js/main.js"></script>
 
-	<title>Minetrack</title>
+	<title>Minetrack.cz</title>
 
 </head>
 
@@ -38,7 +48,7 @@
 	<div id="status-overlay">
 		<img class="logo-image" src="../images/logo.svg">
 		<h1 class="logo-text">Minetrack</h1>
-		<div id="status-text">Connecting...</div>
+		<div id="status-text">Připojování...</div>
 	</div>
 
 	<div id="push">
@@ -49,13 +59,15 @@
 			<div class="header-possible-row-break column-left">
 				<img class="logo-image" src="../images/logo.svg">
 				<h1 class="logo-text">Minetrack</h1>
-				<p class="logo-status">Counting <span class="global-stat" id="stat_totalPlayers">0</span> players on <span class="global-stat" id="stat_networks">0</span> Minecraft servers.</p>
+				<p class="logo-status">Připojeno <span class="global-stat" id="stat_totalPlayers">0</span> hráčů na <span class="global-stat" id="stat_networks">0</span> Minecraft serverech.</p>
 			</div>
 
 			<div class="header-possible-row-break column-right">
-				<div id="sort-by" class="header-button header-button-single"><span class="icon-sort-amount-desc"></span> Sort By<br><strong id="sort-by-text">...</strong></div>
+				<div id="sort-by" class="header-button header-button-single"><span class="icon-sort-amount-desc"></span> Seřadit<br><strong id="sort-by-text">...</strong></div>
 
-				<div id="settings-toggle" class="header-button header-button-single" style="margin-left: 20px;"><span class="icon-gears"></span> Graph Controls</div>
+				<div id="settings-toggle" class="header-button header-button-single" style="margin-left: 20px;"><span class="icon-gears"></span> Nastavení grafů</div>
+			
+				<a href="https://discord.gg/YeXS6wpVcx"><div id="discord" class="header-button header-button-single" style="margin-left: 20px;"><span class="icon-discord"></span> Náš<br><strong>Discord</strong></div></a>
 			</div>
 		</header>
 
@@ -66,9 +78,9 @@
 				<div id="big-graph-checkboxes"></div>
 
 				<span class="graph-controls-setall">
-					<a minetrack-show-type="all" class="button graph-controls-show"><span class="icon-eye"></span> Show All</a>
-					<a minetrack-show-type="none" class="button graph-controls-show"><span class="icon-eye-slash"></span> Hide All</a>
-					<a minetrack-show-type="favorites" class="button graph-controls-show"><span class="icon-star"></span> Only Favorites</a>
+					<a minetrack-show-type="all" class="button graph-controls-show"><span class="icon-eye"></span> Zobrazit vše</a>
+					<a minetrack-show-type="none" class="button graph-controls-show"><span class="icon-eye-slash"></span> Skrýt vše</a>
+					<a minetrack-show-type="favorites" class="button graph-controls-show"><span class="icon-star"></span> Pouze oblíbené</a>
 				</span>
 			</div>
 		</div>
@@ -78,7 +90,8 @@
 	</div>
 
 	<footer id="footer">
-		<span class="icon-code"></span> Powered by open source software - <a href="https://github.com/Cryptkeeper/Minetrack">make it your own!</a>
+		<span class="icon-discord"></span> Chceš aby tu byl i tvůj server? Připoj se na <a href="https://discord.gg/YeXS6wpVcx">náš discord!</a><br>
+		<span class="icon-code"></span> Tuto stránku pohání Minetrack - <a href="https://github.com/Cryptkeeper/Minetrack">udělej si svůj!</a>
 	</footer>
 
 </body>
